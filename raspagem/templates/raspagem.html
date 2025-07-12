@@ -1,0 +1,38 @@
+{% extends 'form.html' %}
+
+{% block doc_titulo %} - Raspagem de Dados Imobiliários{% endblock %}
+
+{% block proposito %}
+Obter dados imobiliários utilizando um processo de raspagem (web scraping).
+{% endblock %}
+
+{% block entrada %}
+<form method="POST" action="">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input class="btn btn-primary" type=submit value="Obter Dados">
+</form>
+{% endblock %}
+
+{% block resultados %}
+<div class="section" id="link">
+<h4>Link</h4>
+<p>{{ URL }}</p>
+
+<h4>iniPg</h4>
+<p>{{ iniPg }}</p>
+
+<h4>nPages</h4>
+<p>{{ nPages }}</p>
+
+<h4>params</h4>
+<p>{{ params }}</p>
+
+<h4>headers</h4>
+<p>{{ headers }}</p>
+</div>
+
+<h4>Lista</h4>
+<p>{{ lista }}</p>
+</div>
+{% endblock %}

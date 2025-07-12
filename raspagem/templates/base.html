@@ -1,0 +1,36 @@
+{% load static %}
+{% load l10n %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt_BR">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>Memória de Cálculo</title>
+  <link rel="stylesheet" href="{% static 'base.css' %}" type="text/css" />
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon" />
+  {% block extend_head %}
+  {% endblock %}
+</head>
+<body>
+  <div class="flex-container">
+    <header>
+      <img src="{% static 'favicon.ico' %}" alt="Memória de Cálculo" longdesc="http://www.memoriadecalculo.com.br/" />
+    </header>
+    <nav class="nav" id="indice">
+      <a href="/">Início</a><br/>
+      <a href="/docs/">Documentação</a><br/>
+      {% block indice %}{% endblock %}
+    </nav>
+    <article class="article">
+      <h1>{% block doc_tipo %}{% endblock %}</h1>
+      {% block conteudo %}{% endblock %}
+    </article>
+    <footer>
+      <table class="center"><tr>
+        <td>{% block rodape_esq %}{% endblock %}</td>
+        <td>Copyright ©2014 Memória de Cálculo</td>
+        <td>{% block rodape_dir %}{% endblock %}</td>
+      </tr></table>
+    </footer>
+  </div>
+</body>
+</html>
