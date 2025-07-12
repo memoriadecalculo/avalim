@@ -11,7 +11,7 @@ def ChromeSessao():
     
     options = ChromeOptions()
     #options.headless = True
-    options.add_argument("--headless=new")
+    #options.add_argument("--headless=new")
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
     options.add_argument('--no-default-browser-check')
@@ -20,9 +20,6 @@ def ChromeSessao():
     options.add_argument('--disable-extensions')
     options.add_argument('--disable-default-apps')
     options.add_argument("--window-size=1024,768")
-    options.add_argument(
-    "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-)
     if system() == "Windows":
         options.binary_location = join(BASE_DIR, 'chrome', 'chrome.exe')
         engine_path             = join(BASE_DIR, 'chrome', 'chromedriver.exe')
