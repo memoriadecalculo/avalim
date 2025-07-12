@@ -4,6 +4,7 @@
 import pandas as pd
 
 from datetime                  import datetime
+from django.http               import HttpResponse
 from django.shortcuts          import render
 from django.views.generic.edit import FormView, View
 from raspagem                  import forms, Raspador, VivaRealListaSimples
@@ -34,6 +35,10 @@ class Raspagem(FormView):
                                       headers=form.cleaned_data['headers'], \
                                       params=form.cleaned_data['params'])
         raspador = Raspador(Perfil)
-        lista = pd.DataFrame(raspador.get_pags())
-        return render(self.request, self.template_name, {'lista': lista,})
+        lista = pd.DataFrame(raspador.get_pags()).to_csv(index=False)
+        response = HttpResponse(lista, content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="my_data.csv"'
+        return response
+        # lista = pd.DataFrame(raspador.get_pags()).to_html(index=False)
+        # return render(self.request, self.template_name, {'lista': lista,})
 
