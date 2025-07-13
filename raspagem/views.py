@@ -7,7 +7,7 @@ from datetime                  import datetime
 from django.http               import HttpResponse
 from django.shortcuts          import render
 from django.views.generic.edit import FormView, View
-from raspagem                  import forms, Raspador, VivaRealListaSimples
+from raspagem                  import forms, Raspador, ImovelWebListaSimples, VivaRealListaSimples
 
 class Inicio(View):
     template_name = 'inicio.html'
@@ -28,7 +28,7 @@ class Raspagem(FormView):
         params = form.cleaned_data['params']
         headers = form.cleaned_data['headers']
         
-        Perfil = VivaRealListaSimples(url=form.cleaned_data['URL'], \
+        Perfil = ImovelWebListaSimples(url=form.cleaned_data['URL'], \
                                       arquivo='{0}.csv'.format(datetime.now().strftime("%Y%m%d%H%M%S")), \
                                       qtdPg=form.cleaned_data['nPages'], \
                                       iniPg=form.cleaned_data['iniPg'], \

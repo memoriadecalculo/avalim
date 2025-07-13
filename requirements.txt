@@ -1,3 +1,4 @@
 Django
 pandas
 undetected-chromedriver
+bs4
