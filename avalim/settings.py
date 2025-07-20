@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-&71hg@%*k0%k@1x!nvcf90ni@8-$4*m@)=kzw$_!i7ir)na)y!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'laurocdesa.pythonanywhere.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -80,7 +80,7 @@ WSGI_APPLICATION = 'avalim.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'avalim' / 'db.sqlite3',
     }
 }
 

@@ -34,28 +34,9 @@ class Raspador():
     """Raspador do sítio Viva Real."""
     
     def __init__(self, perfil):
-        self.pags     = []
-        self.dados    = []
-        self.tespera  = 5
-        self.timeout  = 20
         self.perfil   = perfil
         self.contador = self.perfil.iniPg
         #self.engine   = ChromeSessao()
-    
-    @property
-    def perfil(self):
-        return self._perfil
-    
-    @perfil.setter
-    def perfil(self, value):
-        self._perfil = None
-        if value:
-            if isinstance(value, Perfil):
-                self._perfil = value
-            else:
-                print("Perfil {0} inválido!".format(value))
-        else:
-            print("Salvando 'None' como Perfil.".format(value))
     
     def get_pags(self):
         import csv
@@ -74,7 +55,7 @@ class Raspador():
         
         if self.perfil.arquivo:
             with open(self.perfil.arquivo, 'w') as csvarq:
-                writer = csv.DictWriter(csvarq, fieldnames = self.perfil.campos)
+                writer = csv.DictWriter(csvarq, fieldnames = self.perfil.campos, delimiter=';')
                 writer.writeheader()
         
         
@@ -82,18 +63,16 @@ class Raspador():
             self.engine   = ChromeSessao()
             
             self.engine.get(self.perfil.url.format(self.contador))
-            #time.sleep(self.tespera)
             dt_pg = datetime.now()
             print("{0} - {1} {2} - Raspando.".format(dt_pg.strftime("%d/%m/%Y %H:%M:%S"), self.perfil.tipo, self.contador))
             
             try:
-                pag_prox = WebDriverWait(self.engine, self.timeout).until(visibility_of_element_located((By.CSS_SELECTOR, self.perfil.ESPERA.format(nPage+1))))
+                pag_prox = WebDriverWait(self.engine, self.perfil.timeout).until(visibility_of_element_located((By.CSS_SELECTOR, self.perfil.ESPERA.format(nPage+1))))
                 #self.engine.execute_script("window.scrollTo(0, document.body.scrollHeight);")  #Scroll to bottom
-                
                 #self.engine.execute_script("window.scrollBy(0, 200);")
                 element = self.engine.find_element(By.CSS_SELECTOR, self.perfil.ESPERA.format(nPage+1))
                 self.engine.execute_script("arguments[0].scrollIntoView();", element)
-                time.sleep(self.tespera)
+                time.sleep(self.perfil.tespera)
             except TimeoutException:
                 print("{0} - {1} {2} - Não encontrado.".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), self.perfil.tipo, self.contador))
                 break
@@ -104,13 +83,13 @@ class Raspador():
             
             if self.perfil.arquivo:
                 with open(self.perfil.arquivo, 'a') as csvfile:
-                    writer = csv.DictWriter(csvfile, fieldnames = self.perfil.campos)
+                    writer = csv.DictWriter(csvfile, fieldnames = self.perfil.campos, delimiter=';')
                     writer.writerows(dados)
             print("{0} - {1} {2} - Raspado. Tempo: {3}.".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), self.perfil.tipo, self.contador, (datetime.now() - dt_pg)))
             
             if nPage < self.perfil.qtdPg:
                 try:
-                    pag_prox = WebDriverWait(self.engine, self.timeout).until(visibility_of_element_located((By.CSS_SELECTOR, self.perfil.PAGINADOR.format(nPage+1))))
+                    pag_prox = WebDriverWait(self.engine, self.perfil.timeout).until(visibility_of_element_located((By.CSS_SELECTOR, self.perfil.PAGINADOR.format(nPage+1))))
                     #self.engine.find_element(By.CSS_SELECTOR, self.perfil.PAGINADOR.format(nPage+1)).click()
                     #self.engine.execute_script("arguments[0].click()", pag_prox)
                 except TimeoutException:
@@ -124,27 +103,31 @@ class Raspador():
         print("{0} - {1} - Raspagem - Fim. Tempo: {2}.".format(datetime.now().strftime("%d/%m/%Y %H:%M:%S"), self.perfil.tipo, (datetime.now() - dt_ini)))
         return self.dados
 
-class Perfil():
-    """Perfil base para Raspadores imobiliários.
+class ImovelWebListaSimples():
+    """Perfil de lista simples de anúncios do sítio imobiliário Imovelweb para
+       Raspadores imobiliários.
+       
+    url:   endereço da página inicial.
     
-    url: initial page url.
-         If more than one page will be scraped, page number parameter as "{}"
-         must be in the url to be replaced by the page number.
+    iniPg: se mais de uma página for raspada, use este parâmetro como "{}"
+           para que seja substituído pelo número da página.
     
-    qtdPg: number of pages to scrape.
-            Scraper will start at 1 and stop at qtdPg.
+    qtdPg: quantidade total de páginas. O raspador começará por iniPg e
+           terminará em qtdPg.
     
-    params: parameters for web requests.
+    params: parâmetros da requisição da web.
     
-    headers: for web requests."""
+    headers: cabeçalhos da requisição da web."""
     
-    CAMPOS    = []
-    ESPERA    = ''
-    PAGINADOR = ''
+    CAMPOS    = ['Endereco', 'Bairro', 'Area', 'Quartos', 'Banheiros', 'Vagas', 'Preco', 'Cond.', 'Link', 'Publicado']
+    ESPERA    = 'div.paging-module__container-paging'
+    # ESPERA    = 'button.l-button.l-button--appearance-iconButton.l-button--context-primary.l-button--no-label.l-button--size-regular'
+    PAGINADOR = ESPERA
     # ID      = 0
     PARSERS   = ['html.parser',]
     
-    def __init__(self, url, arquivo = '', campos = '*', qtdPg = 1, iniPg = 1, headers = {}, params = {}, urls_csv = ''):
+    def __init__(self, url, arquivo = '', campos = '*', iniPg = 1, qtdPg = 1, \
+                 headers = {}, params = {}, urls_csv = '', tespera  = 3, timeout  = 20):
         self.url      = url
         self.arquivo  = arquivo
         self.campos   = campos
@@ -154,8 +137,10 @@ class Perfil():
         self.params   = params
         self.parser   = 'html.parser'
         self.derivado = ''
-        self.tipo     = 'Base'
+        self.tipo     = 'Lista'
         self.urls_csv = urls_csv
+        self.tespera  = tespera
+        self.timeout  = timeout
         # self.__class__.ID += 1
         # self.id       = self.__class__.ID
     
@@ -207,23 +192,7 @@ class Perfil():
     
     def get_dados(self, pag, url_base):
         result = []
-        return result
-
-class ImovelWebListaSimples(Perfil):
-    """Lista de anúncios do sítio imobiliário Imovelweb."""
-    
-    CAMPOS    = ['Endereço', 'Bairro', 'Área', 'Quartos', 'Banheiros', 'Vagas', 'Oferta', 'Cond.', 'Link', 'Publicado']
-    ESPERA    = 'div.paging-module__container-paging'
-    #ESPERA    = 'button.l-button.l-button--appearance-iconButton.l-button--context-primary.l-button--no-label.l-button--size-regular'
-    PAGINADOR = ESPERA
-    
-    def __init__(self, url, arquivo='', campos='*', qtdPg=1, iniPg = 1, headers={}, params={}):
-        Perfil.__init__(self, url, arquivo=arquivo, campos=campos, qtdPg=qtdPg, iniPg=iniPg, headers=headers, params=params)
         
-        self.tipo     = 'Lista'
-    
-    def get_dados(self, pag, url_base):
-        result = Perfil.get_dados(self, pag, url_base)
         dados  = pag.find_all('div', class_="postingCardLayout-module__posting-card-container")
         
         for dado in dados:
@@ -239,13 +208,13 @@ class ImovelWebListaSimples(Perfil):
                     link           = link = url_base + link
                 else:
                     link = url_base
-                dado_r['Endereço'] = dado_r['Link'] = link
+                dado_r['Endereco'] = dado_r['Link'] = link
             
-            if 'Endereço' in self.campos:
+            if 'Endereco' in self.campos:
                 endereco           = dado.find('div', class_="postingLocations-module__location-address postingLocations-module__location-address-in-listing")
                 if not endereco:
                     endereco           = dado.find('div', class_="postingLocations-module__location-address postingLocations-module__location-address-in-listing postingLocations-module__location-address-development")
-                dado_r['Endereço'] = self.texto_limpo(endereco.text)
+                dado_r['Endereco'] = self.texto_limpo(endereco.text)
             
             if 'Bairro' in self.campos:
                 bairro           = self.texto_limpo(dado.find('h2', class_="postingLocations-module__location-text").text)
@@ -255,7 +224,7 @@ class ImovelWebListaSimples(Perfil):
             i = 1
             for detalhe in detalhes:
                 if i == 1:
-                    dado_r['Área']      = self.texto_limpo(detalhe.text).replace(' m² tot.', '')
+                    dado_r['Area']      = self.texto_limpo(detalhe.text).replace(' m² tot.', '')
                 if i == 2:
                     dado_r['Quartos']   = self.texto_limpo(detalhe.text).replace(' quartos', '').replace(' quarto', '')
                 if i == 3:
@@ -264,107 +233,24 @@ class ImovelWebListaSimples(Perfil):
                     dado_r['Vagas']     = self.texto_limpo(detalhe.text).replace(' vagas', '').replace(' vaga', '')
                 i += 1
                 
-            if 'Oferta' in self.campos:
-                oferta    = self.texto_limpo(dado.find('div', class_="postingPrices-module__price").text)
-                dado_r['Oferta'] = oferta
+            if 'Preco' in self.campos:
+                preco           = self.texto_limpo(dado.find('div', class_="postingPrices-module__price").text).replace('.', '')
+                dado_r['Preco'] = preco
             
             if 'Publicado' in self.campos:
                 try:
-                    publicado    = self.texto_limpo(dado.find('div', class_="postingCard-module__posting-antiquity-date").text).replace('Publicado há mais de ', '').replace('Publicado há ', '')
+                    publicado    = self.texto_limpo(dado.find('div', class_="postingCard-module__posting-antiquity-date").text).replace('Publicado hoje', '0').replace('Publicado desde ontem', '1').replace('Publicado há mais de ', '').replace('Publicado há ', '').replace(' dias', '')
                 except:
                     publicado = None
                 dado_r['Publicado'] = publicado
             
-            # if 'Cond.' in self.campos:
-            #     cond    = dado.find('div', class_="property-card__price-details--condo")
-            #     if cond:
-            #         cond = self.texto_limpo(cond.find('strong', class_="js-condo-price"))
-            #         dado_r['Cond.'] = cond
-            
-            # print(dado_r)
-            
-            result.append(dado_r)
-            
-            # time.sleep(1)
-            
-        return result
-
-class VivaRealListaSimples(Perfil):
-    """Lista de anúncios do sítio imobiliário Viva Real."""
-    
-    CAMPOS    = ['Endereço', 'Bairro', 'Área', 'Quartos', 'Banheiros', 'Vagas', 'Oferta', 'Cond.', 'Link']
-    ESPERA    = 'nav.l-pagination.l-pagination--numbered'
-    #ESPERA    = 'button.l-button.l-button--appearance-iconButton.l-button--context-primary.l-button--no-label.l-button--size-regular'
-    PAGINADOR = ESPERA
-    
-    
-    def __init__(self, url, arquivo='', campos='*', qtdPg=1, iniPg = 1, headers={}, params={}):
-        Perfil.__init__(self, url, arquivo=arquivo, campos=campos, qtdPg=qtdPg, iniPg=iniPg, headers=headers, params=params)
-        
-        self.tipo     = 'Lista'
-    
-    def get_dados(self, pag, url_base):
-        result = Perfil.get_dados(self, pag, url_base)
-        print(pag)
-        dados  = pag.find_all('a', class_="block border border-neutral-90 rounded-1 overflow-hidden text-neutral-120 group/card text-start shadow-bottom-0 duration-1 hover:shadow-bottom-6 transition-shadow ease-in")
-        print(dados)
-        for dado in dados:
-            dado_r   = {}
-            endereco = area = ''
-            
-            #link = url_base + dado['href']
-            link = dado['href']
-            
-            if 'Endereço' in self.campos:
-                endereco           = self.texto_limpo(dado.find('p', class_="text-1-75 font-regular text-ellipsis overflow-hidden"))
-                print(endereco)
-                dado_r['Endereço'] = endereco
-            
-            if 'Bairro' in self.campos:
-                bairro           = self.texto_limpo(dado.find('h2', attrs={"data-cy": "rp-cardProperty-location-txt"}).text)
-                dado_r['Bairro'] = bairro
-            
-            if 'Área' in self.campos:
-                area           = self.texto_limpo(dado.find('h3', class_="flex row items-center gap-0-5").text)
-                dado_r['Área'] = area
-            
-            if 'Quartos' in self.campos:
-                secao              = dado.find('li', attrs={"data-cy": "rp-cardProperty-bedroomQuantity-txt"})
-                if secao:
-                    qtdQuartos   = self.texto_limpo(secao.find('h3', class_="flex row items-center gap-0-5").text)
-                    dado_r['Quartos'] = qtdQuartos
-            
-            if 'Banheiros' in self.campos:
-                secao              = dado.find('li', attrs={"data-cy": "rp-cardProperty-bathroomQuantity-txt"})
-                if secao:
-                    qtdBanheiros = self.texto_limpo(secao.find('h3', class_="flex row items-center gap-0-5").text)
-                    dado_r['Banheiros'] = qtdBanheiros
-            
-            if 'Vagas' in self.campos:
-                secao              = dado.find('li', attrs={"data-cy": "rp-cardProperty-parkingSpacesQuantity-txt"})
-                if secao:
-                    qtdVagas     = self.texto_limpo(secao.find('h3', class_="flex row items-center gap-0-5").text)
-                    dado_r['Vagas'] = qtdVagas
-            
-            if 'Oferta' in self.campos:
-                oferta    = dado.find('p', class_="text-2-25 text-feedback-success-110 font-semibold")
-                if not oferta:
-                    oferta    = dado.find('p', class_="text-2-25 text-neutral-120 font-semibold")
-                dado_r['Oferta'] = oferta.text
-            
-            # if 'Cond.' in self.campos:
-            #     cond    = dado.find('div', class_="property-card__price-details--condo")
-            #     if cond:
-            #         cond = self.texto_limpo(cond.find('strong', class_="js-condo-price"))
-            #         dado_r['Cond.'] = cond
-            
-            dado_r['Link'] = link
-            
-            # print(dado_r)
+            if 'Cond.' in self.campos:
+                try:
+                    cond    = self.texto_limpo(dado.find('div', class_="postingPrices-module__expenses postingPrices-module__expenses-property-listing").text).replace('.', '').replace(' Condominio', '')
+                except:
+                    cond = None
+                dado_r['Cond.'] = cond
             
             result.append(dado_r)
             
-            # time.sleep(1)
-            
         return result
-

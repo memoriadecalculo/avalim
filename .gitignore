@@ -208,3 +208,9 @@ __marimo__/
 /chrome/
 /.project
 /.pydevproject
+/amostra_bruta.csv
+/amostra_ini.csv
+/amostra_so_dp.csv
+/amostra_transf.dat
+/amostra.csv
+/modelo_comb.dat
