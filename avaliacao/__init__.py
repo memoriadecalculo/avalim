@@ -6,8 +6,10 @@ from copy import copy
 import itertools
 import numpy           as np
 import pandas          as pd
+import pickle
 import scipy.stats     as st
 import statsmodels.api as sm
+from pickle import NONE
 
 # Procedimento Stepwise
 def stepwise(modelo, X, Y):
@@ -106,6 +108,49 @@ def amostra_transformada(amostra, combs):
         amostra_transf.append(coluna_transf)
         
     return amostra_transf
+
+# Calcula os Coeficientes de Determinação R2 de todas as equações transformadas.
+def rsquared_transf(amostra_transf):
+    modelo_comb = []
+    rsquared_comb = []
+    modelo_comb_arq = open('modelo_comb.dat', 'wb')
+    for i in range(len(amostra_transf)):
+        print('\r comb = {0}'.format(i+1), end='', flush=True)
+        valoresX = amostra_transf[i].drop(['Unitario'], axis=1)
+        modelo_comb = sm.OLS(amostra_transf[i]['Unitario'], sm.add_constant(valoresX)).fit()
+        # modelo_comb.append(sm.OLS(amostra_transf[i]['Unitario'], sm.add_constant(valoresX)).fit())
+        rsquared_comb.append(modelo_comb.rsquared)
+    
+        pickle.dump(modelo_comb, modelo_comb_arq, pickle.HIGHEST_PROTOCOL)
+    
+    modelo_comb_arq.close()
+    print("\n")
+    
+    return rsquared_comb
+
+# Imprime R2 da qtd de resultados informada.
+def resultados_transf(rsquared_comb, qtd, amostra, combs):
+    resultados = sorted(list(enumerate(rsquared_comb)), key=lambda x:x[1], reverse = True)[0:qtd]
+    for resultado in resultados:
+        print("{0} - {1} - {2} - {3}{4}".format(resultado[0], \
+                                          resultado[1], \
+                                          tuple(amostra.columns), \
+                                          combs[resultado[0]], \
+                                          comb_print(combs[resultado[0]])))
+    return None
+
+# Carrega o modelo N.
+def carrega_modelo(modelo_n, combs):
+    i = 0
+    with open('modelo_comb.dat', 'rb') as modelo_comb_arq:
+        for i in range(len(combs)):
+            if i <= modelo_n:
+                modelo_comb_n = pickle.load(modelo_comb_arq)
+            else:
+                break
+    
+    modelo_comb_arq.close()
+    return modelo_comb_n
 
 # Função para Remover os Dados Discrepantes
 # Esta função remove os dados com resíduos padronizados maiores do que residMax
