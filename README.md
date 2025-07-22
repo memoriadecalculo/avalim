@@ -8,6 +8,9 @@ Avaliador de Imóveis incluindo as fases de coleta e análise dos dados.
 
     pip install -r requirements
 
+3. Baixe o Chrome e ChromeDriver do sítio [https://googlechromelabs.github.io/chrome-for-testing/](https://googlechromelabs.github.io/chrome-for-testing/)
+   e coloque na pasta *chrome* na raiz da pasta *avalim*.
+
 ## 2. Utilização
 ### 2.1. Coleta dos Dados
 
